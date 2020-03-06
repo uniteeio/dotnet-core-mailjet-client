@@ -19,7 +19,7 @@ To use this extensions, you need to define in the `MailjetApi` section the follo
  
 If you are in Staging or Development mode, you can send mail to a specific mail address setting the value of `EnableMailjetInDevEnv` to `true` and the value of `SendMailToInDevEnv` to your testing mail address.        
 
-```
+```json
          "MailjetApi": {
            "EnableMailjetInDevEnv": true,
            "SendMailToInDevEnv": "john.doo@unitee.io",
@@ -32,7 +32,7 @@ If you are in Staging or Development mode, you can send mail to a specific mail 
 
 ### Add Extensions in Startup.cs
 
-```
+```cs
         private IHostingEnvironment _env;
         private IConfiguration Configuration { get; }
 
@@ -57,7 +57,7 @@ If you are in Staging or Development mode, you can send mail to a specific mail 
 
 ### Inject service 
 
-```
+```cs
 private readonly IMailjetApiClient _iMailjetApiClient;
 
 public FooService(IMailjetApiClient iMailjetApiClient){
@@ -72,7 +72,7 @@ public FooService(IMailjetApiClient iMailjetApiClient){
 You can use the send mail method following the example about to send a mail via a Mailjet Template.
 Some parameters are optionals (attachementFile, variables, Cc mails)
 
-```
+```cs
     await _iMailjetApiClient.SendMail(
         new []{new User{Email = "mailTo@unitee.io"}}, 
         MailjetTemplateId, 
