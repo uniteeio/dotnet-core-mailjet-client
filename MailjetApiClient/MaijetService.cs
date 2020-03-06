@@ -6,7 +6,6 @@ using Mailjet.Client;
 using Mailjet.Client.Resources;
 using MailjetApiClient.Models;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Serilog;
 using User = MailjetApiClient.Models.User;
@@ -120,9 +119,9 @@ namespace MailjetApiClient
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
-                Console.WriteLine(e.InnerException);
+                Log.Error(e.Message);
+                Log.Error(e.StackTrace);
+                Log.Error("InnerException", e.InnerException);
                 return false;
             }     
         }
