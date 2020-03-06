@@ -70,7 +70,7 @@ public FooService(IMailjetApiClient iMailjetApiClient){
 ### Use send mail method
 
 You can use the send mail method following the example about to send a mail via a Mailjet Template.
-Some parameters are facultatives (attachementFile, variables, Cc mails)
+Some parameters are optionals (attachementFile, variables, Cc mails)
 
 ```
     await _iMailjetApiClient.SendMail(
