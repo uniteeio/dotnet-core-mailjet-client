@@ -8,5 +8,6 @@ namespace MailjetApiClient
         public string SenderName { get; set; }   
         public bool EnableMailjetInDevEnv { get; set; }       
         public string SendMailToInDevEnv { get; set; }
+        public bool EmulateProduction { get; set; }
     }
 }
