@@ -19,7 +19,7 @@ namespace MailjetApiClient
         private readonly string _senderName;
         private readonly bool _enableMailjetInDevEnv;
         private readonly string _sendMailToInDevEnv;
-        private readonly bool _emultateProduction;
+        private readonly bool _emulateProduction;
         
         private readonly IHostingEnvironment _env;
         
@@ -36,12 +36,12 @@ namespace MailjetApiClient
             // Used in dev environnement only
             _enableMailjetInDevEnv = options.EnableMailjetInDevEnv;
             _sendMailToInDevEnv = options.SendMailToInDevEnv;
-            _emultateProduction = options.EmulateProduction;
+            _emulateProduction = options.EmulateProduction;
         }
 
         private bool IsProduction() 
         {
-            return _env.IsProduction() || _emultateProduction;
+            return _env.IsProduction() || _emulateProduction;
         }
 
         public async Task<bool> SendMail(IEnumerable<User> users, int templateId, JObject variables = null, MailAttachmentFile attachmentFile = null, List<User> usersInCc = null)
