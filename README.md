@@ -30,6 +30,16 @@ If you are in Staging or Development mode, you can send mail to a specific mail 
          },
 ``` 
 
+In environments like pre-prod, It might be useful to send email to real recipients while configuring its environment to Development or Staging. 
+You can emulate Prouction mode by setting:
+
+```json
+{
+    "EmulateProduction": true
+}
+```
+
+
 ### Add Extensions in Startup.cs
 
 ```cs
@@ -60,10 +70,9 @@ If you are in Staging or Development mode, you can send mail to a specific mail 
 ```cs
 private readonly IMailjetApiClient _iMailjetApiClient;
 
-public FooService(IMailjetApiClient iMailjetApiClient){
-
+public FooService(IMailjetApiClient iMailjetApiClient)
+{
     _iMailjetApiClient = iMailjetApiClient;
-
 }
 ``` 
 

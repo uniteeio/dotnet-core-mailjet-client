@@ -19,6 +19,7 @@ namespace MailjetApiClient
         private readonly string _senderName;
         private readonly bool _enableMailjetInDevEnv;
         private readonly string _sendMailToInDevEnv;
+        private readonly bool _emultateProduction;
         
         private readonly IHostingEnvironment _env;
         
@@ -35,19 +36,25 @@ namespace MailjetApiClient
             // Used in dev environnement only
             _enableMailjetInDevEnv = options.EnableMailjetInDevEnv;
             _sendMailToInDevEnv = options.SendMailToInDevEnv;
+            _emultateProduction = options.EmulateProduction;
+        }
+
+        private bool IsProduction() 
+        {
+            return _env.IsProduction() || _emultateProduction;
         }
 
         public async Task<bool> SendMail(IEnumerable<User> users, int templateId, JObject variables = null, MailAttachmentFile attachmentFile = null, List<User> usersInCc = null)
         {
             try
             {
-                var mailTo = !_env.IsProduction() ? 
+                var mailTo = !IsProduction() ? 
                     new JArray{ new JObject( new JProperty("Email", _sendMailToInDevEnv), new JProperty("Name", " ") )} : 
                     new JArray { from m in users select new JObject( new JProperty("Email", m.Email), new JProperty("Name", m.Email) ) };
 
 
                 var mailCc = new JArray ();
-                if (_env.IsProduction())
+                if (IsProduction())
                 {
                     if (usersInCc != null)
                     {
@@ -89,7 +96,7 @@ namespace MailjetApiClient
                                 }
                             }
                         }, 
-                        {"TemplateErrorReporting", _env.IsProduction() ? null : new JObject {
+                        {"TemplateErrorReporting", IsProduction() ? null : new JObject {
                                 new JProperty("Email", _sendMailToInDevEnv),
                                 new JProperty("Name", _sendMailToInDevEnv)
                             }
@@ -98,7 +105,7 @@ namespace MailjetApiClient
                     }
                 });
                 
-                if (!_env.IsProduction() && !_enableMailjetInDevEnv)
+                if (!IsProduction() && !_enableMailjetInDevEnv)
                     return true;
                 
                 var response = await _client.PostAsync(request);
