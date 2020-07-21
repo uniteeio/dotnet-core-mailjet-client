@@ -1,52 +1,63 @@
-# mailjet-client
+# Mailjet client
 
-Client to easily connect a dotnet core application with Mailjet
+![Nuget](https://img.shields.io/nuget/v/Unitee.MailjetApiClient.ApiClient)
+
+Easily connect a .NET Core application with Mailjet
 
 ## Configuration
 
+### Set up Mailjet variables in `appSettings.json`
 
-### Set up Mailjet variables in appSettings.json
+To use this extension, define a `MailjetApi` section containing the following informations in your configuration. 
 
-To use this extensions, you need to define in the `MailjetApi` section the following variables in your appSettings.json.
-
- `SenderEmail` : mail used to send mails 
- 
- `SenderName` : name used to send mail
- 
- `ApiKeyPublic` : mailjet public key (https://app.mailjet.com/account/api_keys)
-   
- `ApiKeyPrivate` : mailjet private key (https://app.mailjet.com/account/api_keys) 
- 
-If you are in Staging or Development mode, you can send mail to a specific mail address setting the value of `EnableMailjetInDevEnv` to `true` and the value of `SendMailToInDevEnv` to your testing mail address.        
-
-```json
-         "MailjetApi": {
-           "EnableMailjetInDevEnv": true,
-           "SendMailToInDevEnv": "john.doo@unitee.io",
-           "SenderEmail": "sendermail@unitee.io",
-           "SenderName": "unitee.io",
-           "ApiKeyPublic": "xxxxxxxxxxxxxxxxxxx",
-           "ApiKeyPrivate": "xxxxxxxxxxxxxxxxxx"
-         },
-``` 
-
-In environments like pre-prod, It might be useful to send email to real recipients while configuring its environment to Development or Staging. 
-You can emulate Prouction mode by setting:
-
-```json
+```jsonc
+//  appSettings.json
 {
-    "EmulateProduction": true
+    "MailjetApi": {
+        "SenderEmail": "sendermail@unitee.io", // email adress used to send mails
+        "SenderName": "unitee.io", // displayed name
+        "ApiKeyPublic": "xxxxxxxxxxxxxxxxxxx", // mailjet public key (https://app.mailjet.com/account/api_keys)
+        "ApiKeyPrivate": "xxxxxxxxxxxxxxxxxx", // mailjet private key (https://app.mailjet.com/account/api_keys)
+    },
 }
 ```
 
+:warning: By design, emails are not sent in `Development` or `Staging` environments.
 
-### Add Extensions in Startup.cs
+You can still send emails to a specific email address by setting the value of `EnableMailjetInDevEnv` to `true` and the value of `SendMailToInDevEnv` to a testing email address. This will cause every email to be sent to the testing email adress.
+
+```json
+// appSettings.json
+{
+    "MailjetApi": {
+        "EnableMailjetInDevEnv": true,
+        "SendMailToInDevEnv": "john.doo@unitee.io",
+        "SenderEmail": "sendermail@unitee.io",
+        "SenderName": "unitee.io",
+        "ApiKeyPublic": "xxxxxxxxxxxxxxxxxxx",
+        "ApiKeyPrivate": "xxxxxxxxxxxxxxxxxx"
+    },
+}
+```
+
+If you need to send emails in `Development` environments to the real recipients, you can bypass the defaults using:
+
+```jsonc
+// appSettings.json
+{
+    "MailjetApi": {
+        "EmulateProduction": true
+    }
+}
+```
+
+### Add Extensions in `Startup.cs`
 
 ```cs
-        private IHostingEnvironment _env;
+        private IWebHostEnvironment _env;
         private IConfiguration Configuration { get; }
 
-        public Startup(IConfiguration configuration, IHostingEnvironment env)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
             _env = env;
@@ -56,16 +67,16 @@ You can emulate Prouction mode by setting:
         public void ConfigureServices(IServiceCollection services)
         {
             [...]
-            
             services.AddMailjetApiClient(Configuration, _env);
-            
             [...]
         }
 ``` 
 
-## How to use it
+## How to use
 
-### Inject service 
+### Inject the service
+
+Use the dependency injection to inject the service into your class.
 
 ```cs
 private readonly IMailjetApiClient _iMailjetApiClient;
@@ -76,10 +87,11 @@ public FooService(IMailjetApiClient iMailjetApiClient)
 }
 ``` 
 
-### Use send mail method
+### Use the `SendMail` method
 
-You can use the send mail method following the example about to send a mail via a Mailjet Template.
-Some parameters are optionals (attachementFile, variables, Cc mails)
+You can use the `SendMail` method by following the example below to send an email via a Mailjet Template.
+
+:information_source: Some parameters are optionals (attachementFile, variables, Cc mails)
 
 ```cs
     await _iMailjetApiClient.SendMail(
@@ -94,7 +106,7 @@ Some parameters are optionals (attachementFile, variables, Cc mails)
         {
             Filename = filename,
             ContentType = contentType,
-            Base64Content = base64Content 
+            Base64Content = base64Content,
         },
         new []{new User{Email = "mailCc@unitee.io"}} 
     );
