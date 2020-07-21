@@ -8,6 +8,7 @@ using MailjetApiClient.Models;
 using Microsoft.AspNetCore.Hosting;
 using Newtonsoft.Json.Linq;
 using Serilog;
+using Microsoft.Extensions.Hosting;
 using User = MailjetApiClient.Models.User;
 
 namespace MailjetApiClient
@@ -21,9 +22,9 @@ namespace MailjetApiClient
         private readonly string _sendMailToInDevEnv;
         private readonly bool _emulateProduction;
         
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
         
-        public MailjetService(MailjetOptions options, IHostingEnvironment env)
+        public MailjetService(MailjetOptions options, IWebHostEnvironment env)
         {
             _env = env;
             _client = new MailjetClient(options.ApiKeyPublic, options.ApiKeyPrivate)
@@ -41,7 +42,7 @@ namespace MailjetApiClient
 
         private bool IsProduction() 
         {
-            return _env.IsProduction() || _emulateProduction;
+            return _env.EnvironmentName == Environments.Production || _emulateProduction;
         }
 
         public async Task<bool> SendMail(IEnumerable<User> users, int templateId, JObject variables = null, MailAttachmentFile attachmentFile = null, List<User> usersInCc = null)
