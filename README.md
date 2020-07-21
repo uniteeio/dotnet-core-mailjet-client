@@ -67,7 +67,9 @@ public Startup(IConfiguration configuration, IWebHostEnvironment env)
 public void ConfigureServices(IServiceCollection services)
 {
     [...]
+
     services.AddMailjetApiClient(Configuration, _env);
+
     [...]
 }
 ``` 
