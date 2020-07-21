@@ -11,7 +11,7 @@ namespace MailjetApiClient
         private const string Identifier = "MailjetApi";
         
         public static IServiceCollection AddMailjetApiClient(this IServiceCollection services,
-            IConfiguration configuration, IHostingEnvironment environment)
+            IConfiguration configuration, IWebHostEnvironment environment)
         {
             services.AddOptions();
             services.Configure<MailjetOptions>(configuration.GetSection(Identifier));
