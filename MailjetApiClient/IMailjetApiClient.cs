@@ -8,5 +8,8 @@ namespace MailjetApiClient
     public interface IMailjetApiClient
     {
         Task<bool> SendMail(IEnumerable<User> users, int templateId, JObject variables = null, MailAttachmentFile attachmentFile = null, List<User> usersInCc = null);
+        Task AddContact(bool isExcluded, string contactName, string contactEmail, string contactListID = "");
+        Task<int?> GetContactID(string contactEmail);
+        Task DeleteContact(string contactEmail);
     }
 }
