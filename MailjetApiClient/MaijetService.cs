@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Mailjet.Client;
 using Mailjet.Client.Resources;
 using MailjetApiClient.Models;
+using MailjetHttp;
 using Microsoft.AspNetCore.Hosting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -17,6 +18,7 @@ namespace MailjetApiClient
     {
         private readonly MailjetClient _clientV3_1;
         private readonly MailjetClient _clientV3;
+        private readonly MailjetHttpClient _MailJetHttpClient;
         private readonly string _senderEmail;
         private readonly string _senderName;
         private readonly bool _enableMailjetInDevEnv;
@@ -36,6 +38,7 @@ namespace MailjetApiClient
             {
                 Version = ApiVersion.V3
             };
+            _MailJetHttpClient = new MailjetHttpClient();
             _senderEmail = options.SenderEmail;
             _senderName = options.SenderName;
 
@@ -49,6 +52,11 @@ namespace MailjetApiClient
         {
             return _env.IsProduction() || _emulateProduction;
         }
+        public async Task TestHttp()
+        {
+            //test client http
+            await _MailJetHttpClient.CallHttp();
+        }
         public async Task<int?> AddContact(bool isExcluded, string contactName, string contactEmail, string contactListID = "") 
         {
             MailjetRequest request = new MailjetRequest
@@ -59,6 +67,7 @@ namespace MailjetApiClient
                 .Property(Contact.Name, contactName)
                 .Property(Contact.Email, contactEmail);
             MailjetResponse response = await _clientV3.PostAsync(request);
+
             if (response.IsSuccessStatusCode)
             {
                 Log.Information($"Total: {response.GetTotal()}, Count: {response.GetCount()}\n");
@@ -142,7 +151,8 @@ namespace MailjetApiClient
             }
         }
         
-        // Mailjet doesn't allow deleting a contact with their API, you still need to delete it manually, but at least it won't recieve any mail from this list
+        // Mailjet doesn't allow deleting a contact with their API (except in V4), you still need to delete it manually, but at least it won't recieve any mail from this list
+        //TODO: add a method using HTTP client to delete the contact (V4 API is only accepting http requests). So you need to create the HTTP client too
         public async Task<bool> DeleteContactFromContactList(string contactEmail, string contactListID)
         {
             var IDint =  GetContactID(contactEmail);
@@ -178,7 +188,6 @@ namespace MailjetApiClient
                 return false;
             }
         }
-
         public async Task<bool> SendMail(IEnumerable<User> users, int templateId, JObject variables = null, MailAttachmentFile attachmentFile = null, List<User> usersInCc = null)
         {
             try

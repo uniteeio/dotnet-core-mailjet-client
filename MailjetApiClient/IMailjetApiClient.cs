@@ -11,5 +11,6 @@ namespace MailjetApiClient
         Task<int?> AddContact(bool isExcluded, string contactName, string contactEmail, string contactListID = "");
         Task<int?> GetContactID(string contactEmail);
         Task<bool> DeleteContactFromContactList(string contactEmail, string contactListID);
+        Task TestHttp();
     }
 }
