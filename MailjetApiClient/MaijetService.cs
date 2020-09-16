@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Mailjet.Client;
@@ -7,12 +6,6 @@ using Mailjet.Client.Resources;
 using MailjetApiClient.Models;
 using Newtonsoft.Json.Linq;
 using Serilog;
-#if NET5_0
-using Microsoft.AspNetCore.Hosting;
-#else
-using Microsoft.Extensions.Hosting;
-#endif
-using User = MailjetApiClient.Models.User;
 
 namespace MailjetApiClient
 {
@@ -21,31 +14,12 @@ namespace MailjetApiClient
         private readonly MailjetClient _client;
         private readonly string _senderEmail;
         private readonly string _senderName;
-        private readonly bool _enableMailjetInDevEnv;
-        private readonly string _sendMailToInDevEnv;
-        private readonly bool _emulateProduction;
-        
-        #if NET5_0
-        private readonly IWebHostEnvironment _env;
-        public MailjetService(MailjetOptions options, IWebHostEnvironment env){
-            _env = env;
-            _client = new MailjetClient(options.ApiKeyPublic, options.ApiKeyPrivate)
-            {
-                Version = ApiVersion.V3_1
-            };
-            _senderEmail = options.SenderEmail;
-            _senderName = options.SenderName;
-    
-            // Used in dev environnement only
-            _enableMailjetInDevEnv = options.EnableMailjetInDevEnv;
-            _sendMailToInDevEnv = options.SendMailToInDevEnv;
-            _emulateProduction = options.EmulateProduction;
-        }
-        #else
-        private readonly IHostingEnvironment  _env;
-        public MailjetService(MailjetOptions options, IHostingEnvironment  env)
+        private readonly string _testingRedirectionMail;
+        private readonly bool _isSendingMailAllowed;
+
+
+        public MailjetService(MailjetOptions options)
         {
-            _env = env;
             _client = new MailjetClient(options.ApiKeyPublic, options.ApiKeyPrivate)
             {
                 Version = ApiVersion.V3_1
@@ -53,50 +27,35 @@ namespace MailjetApiClient
             _senderEmail = options.SenderEmail;
             _senderName = options.SenderName;
 
-            // Used in dev environnement only
-            _enableMailjetInDevEnv = options.EnableMailjetInDevEnv;
-            _sendMailToInDevEnv = options.SendMailToInDevEnv;
-            _emulateProduction = options.EmulateProduction;
+            _testingRedirectionMail = options.TestingRedirectionMail;
+            _isSendingMailAllowed = options.IsSendingMailAllowed ?? true;
         }
-        #endif
-
         
-
-        private bool IsProduction() 
+        private bool IsInTestMode()
         {
-            #if NET5_0
-                return _env.EnvironmentName == Environments.Production || _emulateProduction;
-            #else
-                return _env.IsProduction() || _emulateProduction;
-            #endif
+            return !string.IsNullOrEmpty(_testingRedirectionMail);
         }
 
-        public async Task<bool> SendMail(IEnumerable<User> users, int templateId, JObject variables = null, MailAttachmentFile attachmentFile = null, List<User> usersInCc = null)
+        public async Task<bool> SendMail(MailjetMail mailJetMail)
         {
+            if (!_isSendingMailAllowed)
+            {
+                return true;
+            }
             try
             {
-                var mailTo = !IsProduction() ? 
-                    new JArray{ new JObject( new JProperty("Email", _sendMailToInDevEnv), new JProperty("Name", " ") )} : 
-                    new JArray { from m in users select new JObject( new JProperty("Email", m.Email), new JProperty("Name", m.Email) ) };
+                var mailTo = IsInTestMode() ? 
+                    new JArray{ new JObject( new JProperty("Email", _testingRedirectionMail), new JProperty("Name", " ") )} : 
+                    new JArray { from user in mailJetMail.Users select new JObject( new JProperty("Email", user.Email), new JProperty("Name", user.Email) ) };
 
 
                 var mailCc = new JArray ();
-                if (IsProduction())
+                    
+                if (mailJetMail.UsersInCc != null && mailJetMail.UsersInCc.Any())
                 {
-                    if (usersInCc != null)
-                    {
-                        foreach (var user in usersInCc)
-                        {
-                            mailCc.Add( new JObject( new JProperty("Email", user.Email), new JProperty("Name", user.Email) ));
-                        }
-                    }
-                }
-                else
-                {
-                    if (usersInCc == null || !usersInCc.Any())
-                    {
-                        mailCc = new JArray { new JObject( new JProperty("Email", _sendMailToInDevEnv), new JProperty("Name", " ") )};
-                    }
+                    mailCc = IsInTestMode() ? 
+                        new JArray { new JObject( new JProperty("Email", _testingRedirectionMail), new JProperty("Name", "TESTING") )} : 
+                        new JArray { from userCc in mailJetMail.UsersInCc select new JObject( new JProperty("Email", userCc.Email), new JProperty("Name", userCc.Email) ) };
                 }
                     
                 // Mail
@@ -111,29 +70,29 @@ namespace MailjetApiClient
                         {"From", new JObject { new JProperty("Email", _senderEmail), new JProperty("Name", _senderName) }},
                         {"To", mailTo},
                         {"Bcc", mailCc},
-                        {"TemplateID", templateId},
+                        {"TemplateID", mailJetMail.TemplateId},
                         {"TemplateLanguage", true},
-                        {"Variables", variables},
-                        {"Attachments", attachmentFile == null ? null : new JArray {
+                        {"Variables", mailJetMail.Variables},
+                        {"Attachments", !mailJetMail.AttachmentFiles.Any() ? null : 
+                                new JArray { from file in mailJetMail.AttachmentFiles select 
                                 new JObject
                                 {
-                                    {"ContentType", attachmentFile.ContentType},
-                                    {"Filename", attachmentFile.Filename},                                
-                                    {"Base64Content", attachmentFile.Base64Content}                                
+                                    {"ContentType", file.ContentType},
+                                    {"Filename", file.Filename},                                
+                                    {"Base64Content", file.Base64Content}                                
                                 }
                             }
                         }, 
-                        {"TemplateErrorReporting", IsProduction() ? null : new JObject {
-                                new JProperty("Email", _sendMailToInDevEnv),
-                                new JProperty("Name", _sendMailToInDevEnv)
+                        {"TemplateErrorReporting", IsInTestMode() ? 
+                            new JObject {
+                                new JProperty("Email", _testingRedirectionMail),
+                                new JProperty("Name", _testingRedirectionMail) 
                             }
+                            : null  
                         },
                         {"TemplateErrorDeliver", true}
                     }
                 });
-                
-                if (!IsProduction() && !_enableMailjetInDevEnv)
-                    return true;
                 
                 var response = await _client.PostAsync(request);
                 if (response.IsSuccessStatusCode)

@@ -6,8 +6,7 @@ namespace MailjetApiClient
         public string ApiKeyPrivate { get; set; }
         public string SenderEmail { get; set; }   
         public string SenderName { get; set; }   
-        public bool EnableMailjetInDevEnv { get; set; }       
-        public string SendMailToInDevEnv { get; set; }
-        public bool EmulateProduction { get; set; }
+        public string TestingRedirectionMail { get; set; }
+        public bool? IsSendingMailAllowed { get; set; }
     }
 }
