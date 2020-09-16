@@ -10,43 +10,20 @@ Easily connect a .NET Core application with Mailjet
 
 To use this extension, define a `MailjetApi` section containing the following informations in your configuration. 
 
-```jsonc
+```json
 //  appSettings.json
 {
     "MailjetApi": {
+        
+        // Mandatory parameters
         "SenderEmail": "sendermail@unitee.io", // email address used to send mails
         "SenderName": "unitee.io", // displayed name
         "ApiKeyPublic": "xxxxxxxxxxxxxxxxxxx", // mailjet public key (https://app.mailjet.com/account/api_keys)
         "ApiKeyPrivate": "xxxxxxxxxxxxxxxxxx", // mailjet private key (https://app.mailjet.com/account/api_keys)
-    },
-}
-```
-
-:warning: By design, emails are not sent in `Development` or `Staging` environments.
-
-You can still send emails to a specific email address by setting the value of `EnableMailjetInDevEnv` to `true` and the value of `SendMailToInDevEnv` to a testing email address. This will cause every email to be sent to the testing email address.
-
-```json
-// appSettings.json
-{
-    "MailjetApi": {
-        "EnableMailjetInDevEnv": true,
-        "SendMailToInDevEnv": "john.doo@unitee.io",
-        "SenderEmail": "sendermail@unitee.io",
-        "SenderName": "unitee.io",
-        "ApiKeyPublic": "xxxxxxxxxxxxxxxxxxx",
-        "ApiKeyPrivate": "xxxxxxxxxxxxxxxxxx"
-    },
-}
-```
-
-If you need to send emails in `Development` environments to the real recipients, you can bypass the defaults using:
-
-```jsonc
-// appSettings.json
-{
-    "MailjetApi": {
-        "EmulateProduction": true
+        
+        // Optionnal parameters
+        "IsSendingMailAllowed": "false", // disallow sending mails
+        "TestingRedirectionMail": "john.doo@unitee.io" // mail used to redirect all mails. Useful for testing 
     }
 }
 ```
@@ -54,13 +31,11 @@ If you need to send emails in `Development` environments to the real recipients,
 ### Add Extensions in `Startup.cs`
 
 ```cs
-private IWebHostEnvironment _env;
 private IConfiguration Configuration { get; }
 
-public Startup(IConfiguration configuration, IWebHostEnvironment env)
+public Startup(IConfiguration configuration)
 {
     Configuration = configuration;
-    _env = env;
 }
 
 
@@ -68,7 +43,7 @@ public void ConfigureServices(IServiceCollection services)
 {
     [...]
 
-    services.AddMailjetApiClient(Configuration, _env);
+    services.AddMailjetApiClient(Configuration);
 
     [...]
 }
@@ -93,25 +68,33 @@ public FooService(IMailjetApiClient iMailjetApiClient)
 
 You can use the `SendMail` method by following the example below to send an email via a Mailjet Template.
 
-:information_source: Some parameters are optionals (attachementFile, variables, Cc mails)
+:information_source: Some parameters are optionals (attachementFiles, variables, Cc mails)
 
 ```cs
-await _iMailjetApiClient.SendMail(
-    new []{new User{Email = "mailTo@unitee.io"}},
-    MailjetTemplateId,
-    new JObject
+var mailjetMail = new MailjetMail(){
+    // Required properties
+    Users = new List<User>(){new User{Email = "mailTo@unitee.io"}}, 
+    TemplateId = MailjetTemplateId, 
+    
+    // Optionnal properties
+    Variables = new JObject
     {
         new JProperty("fooTemplateVariableKey", "foovalue"),
         new JProperty("barTemplateVariableKey", "barvalue"),
     },
-    new MailAttachmentFile()
-    {
-        Filename = filename,
-        ContentType = contentType,
-        Base64Content = base64Content,
-    },
-    new []{new User{Email = "mailCc@unitee.io"}}
-);
+    UsersInCc = new List<User>(){new User(){Email = "mailCc@unitee.io"}},
+    AttachmentFiles = new List<MailAttachmentFile>(){
+         new MailAttachmentFile()
+         {
+             Filename = filename,
+             ContentType = contentType,
+             Base64Content = base64Content,
+         }
+    }
+};
+
+await _iMailjetApiClient.SendMail(mailjetMail);
 ```
+    
 
 
