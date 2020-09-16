@@ -5,10 +5,13 @@ using System.Threading.Tasks;
 using Mailjet.Client;
 using Mailjet.Client.Resources;
 using MailjetApiClient.Models;
-using Microsoft.AspNetCore.Hosting;
 using Newtonsoft.Json.Linq;
 using Serilog;
+#if NET5_0
+using Microsoft.AspNetCore.Hosting;
+#else
 using Microsoft.Extensions.Hosting;
+#endif
 using User = MailjetApiClient.Models.User;
 
 namespace MailjetApiClient
@@ -22,9 +25,25 @@ namespace MailjetApiClient
         private readonly string _sendMailToInDevEnv;
         private readonly bool _emulateProduction;
         
+        #if NET5_0
         private readonly IWebHostEnvironment _env;
-        
-        public MailjetService(MailjetOptions options, IWebHostEnvironment env)
+        public MailjetService(MailjetOptions options, IWebHostEnvironment env){
+            _env = env;
+            _client = new MailjetClient(options.ApiKeyPublic, options.ApiKeyPrivate)
+            {
+                Version = ApiVersion.V3_1
+            };
+            _senderEmail = options.SenderEmail;
+            _senderName = options.SenderName;
+    
+            // Used in dev environnement only
+            _enableMailjetInDevEnv = options.EnableMailjetInDevEnv;
+            _sendMailToInDevEnv = options.SendMailToInDevEnv;
+            _emulateProduction = options.EmulateProduction;
+        }
+        #else
+        private readonly IHostingEnvironment  _env;
+        public MailjetService(MailjetOptions options, IHostingEnvironment  env)
         {
             _env = env;
             _client = new MailjetClient(options.ApiKeyPublic, options.ApiKeyPrivate)
@@ -39,10 +58,17 @@ namespace MailjetApiClient
             _sendMailToInDevEnv = options.SendMailToInDevEnv;
             _emulateProduction = options.EmulateProduction;
         }
+        #endif
+
+        
 
         private bool IsProduction() 
         {
-            return _env.EnvironmentName == Environments.Production || _emulateProduction;
+            #if NET5_0
+                return _env.EnvironmentName == Environments.Production || _emulateProduction;
+            #else
+                return _env.IsProduction() || _emulateProduction;
+            #endif
         }
 
         public async Task<bool> SendMail(IEnumerable<User> users, int templateId, JObject variables = null, MailAttachmentFile attachmentFile = null, List<User> usersInCc = null)
