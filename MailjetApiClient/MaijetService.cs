@@ -11,7 +11,8 @@ namespace MailjetApiClient
 {
     public class MailjetService: IMailjetApiClient
     {
-        private readonly MailjetClient _client;
+        private readonly MailjetClient _clientV3_1;
+        private readonly MailjetClient _clientV3;
         private readonly string _senderEmail;
         private readonly string _senderName;
         private readonly string _testingRedirectionMail;
@@ -20,9 +21,13 @@ namespace MailjetApiClient
 
         public MailjetService(MailjetOptions options)
         {
-            _client = new MailjetClient(options.ApiKeyPublic, options.ApiKeyPrivate)
+            _clientV3_1 = new MailjetClient(options.ApiKeyPublic, options.ApiKeyPrivate)
             {
                 Version = ApiVersion.V3_1
+            };
+            _clientV3 = new MailjetClient(options.ApiKeyPublic, options.ApiKeyPrivate)
+            {
+                Version = ApiVersion.V3
             };
             _senderEmail = options.SenderEmail;
             _senderName = options.SenderName;
@@ -35,7 +40,7 @@ namespace MailjetApiClient
         {
             return !string.IsNullOrEmpty(_testingRedirectionMail);
         }
-
+        
         public async Task<bool> SendMail(MailjetMail mailJetMail)
         {
             if (!_isSendingMailAllowed)
@@ -94,7 +99,7 @@ namespace MailjetApiClient
                     }
                 });
                 
-                var response = await _client.PostAsync(request);
+                var response = await _clientV3_1.PostAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
                     Log.Information($"Total: {response.GetTotal()}, Count: {response.GetCount()}\n");
@@ -117,6 +122,128 @@ namespace MailjetApiClient
                 Log.Error("InnerException", e.InnerException);
                 return false;
             }     
+        }
+        
+        public async Task<int?> AddContact(MailjetContact mailjetContact) 
+        {
+            var request = new MailjetRequest
+            {
+                Resource = Contact.Resource,
+            }
+            .Property(Contact.IsExcludedFromCampaigns, mailjetContact.IsExcluded)
+            .Property(Contact.Name, mailjetContact.ContactName)
+            .Property(Contact.Email, mailjetContact.ContactEmail);
+
+            var response = await _clientV3.PostAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                Log.Information($"Total: {response.GetTotal()}, Count: {response.GetCount()}\n");
+                Log.Information(response.GetData().ToString());
+                var responseData = response.GetData();
+                var id = (int)responseData[0]["ID"];
+                //if the contact is successfully created, push it to a contact list, if it's id is given
+                if (!string.IsNullOrEmpty(mailjetContact.ContactListId))
+                {
+                    try
+                    {
+                        var requestToContactList = new MailjetRequest
+                        {
+                            Resource = ContactManagecontactslists.Resource,
+                            ResourceId = ResourceId.Numeric(id)
+                        }.Property(ContactManagecontactslists.ContactsLists, new JArray {
+                            new JObject {
+                                {"Action", "addnoforce"},
+                                {"ListID", mailjetContact.ContactListId}
+                            }
+                        });
+                        var responseContactList = await _clientV3.PostAsync(requestToContactList);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            Log.Information($"Total: {responseContactList.GetTotal()}, Count: {responseContactList.GetCount()}\n");
+                            Log.Information(responseContactList.GetData().ToString());
+                            return id;
+                        }
+                        else
+                        {
+                            Log.Error($"StatusCode: {responseContactList.StatusCode}");
+                            Log.Error($"ErrorInfo: {responseContactList.GetErrorInfo()}");
+                            Log.Error(response.GetData().ToString());
+                            Log.Error($"ErrorMessage: {responseContactList.GetErrorMessage()}");
+                            return id;
+                        }
+                    } catch (Exception e)
+                    {
+                        Log.Error(e.Message);
+                        Log.Error(e.StackTrace);
+                        Log.Error("InnerException", e.InnerException);
+                        return id;
+                    }
+                } else {
+                    return id;
+                }    
+            }
+            else
+            {
+                Log.Error($"StatusCode: {response.StatusCode}");
+                Log.Error($"ErrorInfo: {response.GetErrorInfo()}");
+                Log.Error(response.GetData().ToString());
+                Log.Error($"ErrorMessage: {response.GetErrorMessage()}");
+            }
+            return null;
+        }
+
+        //TODO upgrade the addcontact method to add custom property then another method to update a contact
+        public async Task<int?> GetContactId(string contactEmail)
+        {
+            var request = new MailjetRequest
+            {
+                Resource = new ResourceInfo("contact/"+contactEmail),
+            };
+            var response = await _clientV3.GetAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                Log.Information($"Total: {response.GetTotal()}, Count: {response.GetCount()}\n");
+                Log.Information(response.GetData().ToString());
+                var responseData = response.GetData();
+                int id = (int)responseData[0]["ID"];
+                return id;
+            }
+            else
+            {
+                Log.Error($"StatusCode: {response.StatusCode}");
+                Log.Error($"ErrorInfo: {response.GetErrorInfo()}");
+                Log.Error(response.GetData().ToString());
+                Log.Error($"ErrorMessage: {response.GetErrorMessage()}");
+                return null;
+            }
+        }
+
+        
+        // Mailjet doesn't allow deleting a contact with their API (except in V4), you still need to delete it manually, but at least it won't recieve any mail from this list
+        //TODO: add a method using HTTP client to delete the contact (V4 API is only accepting http requests). So you need to create the HTTP client too
+        public async Task<bool> DeleteContactFromContactList(string contactEmail, string contactListId)
+        {
+            var id =  Convert.ToInt64(GetContactId(contactEmail));
+            var request = new MailjetRequest
+            {
+                Resource = Contactdata.Resource,
+                ResourceId = ResourceId.Numeric(id)
+            };
+            var response = await _clientV3.DeleteAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                Log.Error($"Total: {response.GetTotal()}, Count: {response.GetCount()}");
+                Log.Error(response.GetData().ToString());
+                return true;
+            }
+            else
+            {
+                Log.Error($"StatusCode: {response.StatusCode}");
+                Log.Error($"ErrorInfo: {response.GetErrorInfo()}");
+                Log.Error(response.GetData().ToString());
+                Log.Error($"ErrorMessage: {response.GetErrorMessage()}");
+                return false;
+            }
         }
     }
 }
