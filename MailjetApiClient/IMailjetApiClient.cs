@@ -1,7 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using MailjetApiClient.Models;
-using Newtonsoft.Json.Linq;
 
 namespace MailjetApiClient
 {
@@ -12,5 +10,6 @@ namespace MailjetApiClient
         Task<int?> GetContactID(string contactEmail);
         Task<bool> DeleteContactFromContactList(string contactEmail, string contactListID);
         Task TestHttp();
+        Task<bool> SendMail(MailjetMail mailjetMail);
     }
 }
