@@ -64,7 +64,8 @@ public FooService(IMailjetApiClient iMailjetApiClient)
 }
 ``` 
 
-### Send an email
+### Mailing Features
+#### Send an email
 
 You can use the `SendMail` method by following the example below to send an email via a Mailjet Template.
 
@@ -96,5 +97,36 @@ var mailjetMail = new MailjetMail(){
 await _iMailjetApiClient.SendMail(mailjetMail);
 ```
     
+### Contacts Features
+#### Create a contact
 
+You can use the `AddContact` method by following the example below to add a contact in mailjet and mailings lists.
 
+```cs
+var mailjetContact = new MailjetContact(){
+    
+    // Required properties
+    ContactEmail = "contact@unitee.io"
+    
+    // Optionnal properties
+    ContactName = "John Doe"
+    ContactListId = 1; 
+    IsExcluded = false
+};
+await _iMailjetApiClient.AddContact(mailjetContact);
+```
+
+#### Get contact id by mail
+
+You can use the `GetContactId` to get id contact with mail.
+
+```cs
+await _iMailjetApiClient.GetContactId("contact@unitee.io");
+```
+#### Remove contact from mailings list
+
+You can use the `DeleteContactFromContactList` to remove a contact from mailing list.
+
+```cs
+await _iMailjetApiClient.DeleteContactFromContactList("contact@unitee.io", "idMailingList");
+```
