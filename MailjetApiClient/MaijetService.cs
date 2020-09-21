@@ -102,16 +102,16 @@ namespace MailjetApiClient
                 var response = await _clientV3_1.PostAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
-                    Log.Information($"Total: {response.GetTotal()}, Count: {response.GetCount()}\n");
+                    Log.Information($"Total: {response.GetTotal()}, Count: {response.GetCount()}");
                     Log.Information(response.GetData().ToString());
                     return true;
                 }
                 else
                 {
-                    Log.Error($"StatusCode: {response.StatusCode}\n");
-                    Log.Error($"ErrorInfo: {response.GetErrorInfo()}\n");
+                    Log.Error($"StatusCode: {response.StatusCode}");
+                    Log.Error($"ErrorInfo: {response.GetErrorInfo()}");
                     Log.Error(response.GetData().ToString());
-                    Log.Error($"ErrorMessage: {response.GetErrorMessage()}\n");
+                    Log.Error($"ErrorMessage: {response.GetErrorMessage()}");
                     return false;
                 }
             }
@@ -137,47 +137,14 @@ namespace MailjetApiClient
             var response = await _clientV3.PostAsync(request);
             if (response.IsSuccessStatusCode)
             {
-                Log.Information($"Total: {response.GetTotal()}, Count: {response.GetCount()}\n");
+                Log.Information($"Total: {response.GetTotal()}, Count: {response.GetCount()}");
                 Log.Information(response.GetData().ToString());
                 var responseData = response.GetData();
                 var id = (int)responseData[0]["ID"];
                 //if the contact is successfully created, push it to a contact list, if it's id is given
                 if (!string.IsNullOrEmpty(mailjetContact.ContactListId))
                 {
-                    try
-                    {
-                        var requestToContactList = new MailjetRequest
-                        {
-                            Resource = ContactManagecontactslists.Resource,
-                            ResourceId = ResourceId.Numeric(id)
-                        }.Property(ContactManagecontactslists.ContactsLists, new JArray {
-                            new JObject {
-                                {"Action", "addnoforce"},
-                                {"ListID", mailjetContact.ContactListId}
-                            }
-                        });
-                        var responseContactList = await _clientV3.PostAsync(requestToContactList);
-                        if (response.IsSuccessStatusCode)
-                        {
-                            Log.Information($"Total: {responseContactList.GetTotal()}, Count: {responseContactList.GetCount()}\n");
-                            Log.Information(responseContactList.GetData().ToString());
-                            return id;
-                        }
-                        else
-                        {
-                            Log.Error($"StatusCode: {responseContactList.StatusCode}");
-                            Log.Error($"ErrorInfo: {responseContactList.GetErrorInfo()}");
-                            Log.Error(response.GetData().ToString());
-                            Log.Error($"ErrorMessage: {responseContactList.GetErrorMessage()}");
-                            return id;
-                        }
-                    } catch (Exception e)
-                    {
-                        Log.Error(e.Message);
-                        Log.Error(e.StackTrace);
-                        Log.Error("InnerException", e.InnerException);
-                        return id;
-                    }
+                    return await AddContactToAMailingList(mailjetContact, id);
                 } else {
                     return id;
                 }    
@@ -192,6 +159,47 @@ namespace MailjetApiClient
             return null;
         }
 
+        private async Task<int?> AddContactToAMailingList(MailjetContact mailjetContact, int id)
+        {
+            try
+            {
+                var requestToContactList = new MailjetRequest
+                {
+                    Resource = ContactManagecontactslists.Resource,
+                    ResourceId = ResourceId.Numeric(id)
+                }.Property(ContactManagecontactslists.ContactsLists, new JArray
+                {
+                    new JObject
+                    {
+                        {"Action", "addnoforce"},
+                        {"ListID", mailjetContact.ContactListId}
+                    }
+                });
+                var response = await _clientV3.PostAsync(requestToContactList);
+                if (response.IsSuccessStatusCode)
+                {
+                    Log.Information($"Total: {response.GetTotal()}, Count: {response.GetCount()}");
+                    Log.Information(response.GetData().ToString());
+                    return id;
+                }
+                else
+                {
+                    Log.Error($"StatusCode: {response.StatusCode}");
+                    Log.Error($"ErrorInfo: {response.GetErrorInfo()}");
+                    Log.Error(response.GetData().ToString());
+                    Log.Error($"ErrorMessage: {response.GetErrorMessage()}");
+                    return id;
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(e.Message);
+                Log.Error(e.StackTrace);
+                Log.Error("InnerException", e.InnerException);
+                return id;
+            }
+        }
+
         //TODO upgrade the addcontact method to add custom property then another method to update a contact
         public async Task<int?> GetContactId(string contactEmail)
         {
@@ -202,7 +210,7 @@ namespace MailjetApiClient
             var response = await _clientV3.GetAsync(request);
             if (response.IsSuccessStatusCode)
             {
-                Log.Information($"Total: {response.GetTotal()}, Count: {response.GetCount()}\n");
+                Log.Information($"Total: {response.GetTotal()}, Count: {response.GetCount()}");
                 Log.Information(response.GetData().ToString());
                 var responseData = response.GetData();
                 return (int)responseData[0]["ID"];
