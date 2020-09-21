@@ -205,8 +205,7 @@ namespace MailjetApiClient
                 Log.Information($"Total: {response.GetTotal()}, Count: {response.GetCount()}\n");
                 Log.Information(response.GetData().ToString());
                 var responseData = response.GetData();
-                int id = (int)responseData[0]["ID"];
-                return id;
+                return (int)responseData[0]["ID"];
             }
             else
             {
