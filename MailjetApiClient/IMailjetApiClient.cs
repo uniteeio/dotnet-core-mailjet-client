@@ -5,9 +5,9 @@ namespace MailjetApiClient
 {
     public interface IMailjetApiClient
     {
-        Task<bool> SendMail(MailjetMail mailjetMail);
-        Task<int?> AddContact(MailjetContact mailjetContact);
+        Task SendMail(MailjetMail mailjetMail);
+        Task AddOrUpdateContact(MailjetContact mailjetContact);
         Task<int?> GetContactId(string contactEmail);
-        Task<bool> DeleteContactFromContactList(string contactEmail, string contactListId);
+        Task DeleteContactFromContactList(string contactEmail, string contactListId);
     }
 }
