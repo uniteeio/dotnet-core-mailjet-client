@@ -216,7 +216,7 @@ namespace MailjetApiClient
                 var responseData = response.GetData();
                 return (int)responseData[0]["ID"];
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return null;
             }
