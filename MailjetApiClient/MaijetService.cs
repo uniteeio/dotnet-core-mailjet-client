@@ -7,7 +7,6 @@ using MailjetApiClient.Exceptions;
 using MailjetApiClient.Extensions;
 using MailjetApiClient.Models;
 using Newtonsoft.Json.Linq;
-using Serilog;
 
 namespace MailjetApiClient
 {

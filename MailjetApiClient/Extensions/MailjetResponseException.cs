@@ -1,6 +1,5 @@
 using System.Text;
 using Mailjet.Client;
-using Serilog;
 
 namespace MailjetApiClient.Extensions
 {
