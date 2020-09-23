@@ -3,9 +3,9 @@
         <TargetFrameworks>net5.0;netcoreapp2.2;netstandard2.1;netstandard2.0</TargetFrameworks>
         <Authors>CorentinJ, Unitee</Authors>
         <PackageId>Unitee.MailjetApiClient.ApiClient</PackageId>
-        <Version>3.1.0</Version>
+        <Version>3.2.0</Version>
         <NeutralLanguage>en-US</NeutralLanguage>
-        <VersionPrefix>3.1.0</VersionPrefix>
+        <VersionPrefix>3.2.0</VersionPrefix>
         <Title>.NET Core Mailjet API client</Title>
         <Description>A .NET Core api client for Mailjet API</Description>
         <PackageProjectUrl>https://www.nuget.org/packages/Unitee.MailjetApiClient.ApiClient/</PackageProjectUrl>
@@ -14,8 +14,6 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <GenerateErrorForMissingTargetingPacks>false</GenerateErrorForMissingTargetingPacks>
     </PropertyGroup>
-
-
 
     <ItemGroup Condition=" '$(TargetFramework)' == 'net5.0' ">
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
