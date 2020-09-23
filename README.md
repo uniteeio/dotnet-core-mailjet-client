@@ -98,20 +98,27 @@ await _iMailjetApiClient.SendMail(mailjetMail);
 ```
     
 ### Contacts Features
-#### Create a contact
+#### Create or update a contact 
 
-You can use the `AddContact` method by following the example below to add a contact in mailjet and mailings lists.
+You can use the `AddOrUpdateContact` method by following the example below to add or update a contact in mailjet and mailings lists.
 
 ```cs
 var mailjetContact = new MailjetContact(){
     
     // Required properties
-    ContactEmail = "contact@unitee.io"
+    ContactEmail = "contact@unitee.io",
     
     // Optionnal properties
-    ContactName = "John Doe"
-    ContactListId = 1; 
-    IsExcluded = false
+    ContactName = "John Doe",
+    ContactListId = 1, 
+    IsExcluded = false,
+    CustomProperties = new Dictionary<string, string>
+       {
+           { "customProperties1", "value1" },
+           { "customProperties2", "value2" }
+       };
+
+
 };
 await _iMailjetApiClient.AddContact(mailjetContact);
 ```
