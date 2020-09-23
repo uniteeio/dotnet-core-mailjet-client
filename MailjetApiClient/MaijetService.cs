@@ -138,7 +138,7 @@ namespace MailjetApiClient
             var enumerator = mailjetContact.CustomProperties.GetEnumerator();
             var request = new MailjetRequest
             {
-                Resource =  new ResourceInfo(Contactdata.Resource+"/"+contactId),
+                Resource =  new ResourceInfo("contactdata/"+contactId),
             }
             .Property(Contactdata.Data,
             
