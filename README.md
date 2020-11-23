@@ -78,11 +78,12 @@ var mailjetMail = new MailjetMail(){
     TemplateId = MailjetTemplateId, 
     
     // Optionnal properties
-    Variables = new JObject
+    Variables = new Dictionary<string, string>
     {
-        new JProperty("fooTemplateVariableKey", "foovalue"),
-        new JProperty("barTemplateVariableKey", "barvalue"),
-    },
+        { "fooTemplateVariableKey", "foovalue" },
+        { "barTemplateVariableKey", "barvalue" }
+    };
+
     UsersInCc = new List<User>(){new User(){Email = "mailCc@unitee.io"}},
     AttachmentFiles = new List<MailAttachmentFile>(){
          new MailAttachmentFile()

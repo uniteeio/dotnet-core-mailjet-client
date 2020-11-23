@@ -78,7 +78,11 @@ namespace MailjetApiClient
                         {"Bcc", mailCc},
                         {"TemplateID", mailJetMail.TemplateId},
                         {"TemplateLanguage", true},
-                        {"Variables", mailJetMail.Variables},
+                        {"Variables", new JObject
+                            {
+                                from key in mailJetMail.Variables.Keys select new JProperty(key, mailJetMail.Variables[key])
+                            }
+                        },
                         {"Attachments", !mailJetMail.AttachmentFiles.Any() ? null : 
                                 new JArray { from file in mailJetMail.AttachmentFiles select 
                                 new JObject
