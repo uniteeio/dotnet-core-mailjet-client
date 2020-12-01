@@ -75,7 +75,7 @@ namespace MailjetApiClient
                     {
                         {"From", new JObject { new JProperty("Email", _senderEmail), new JProperty("Name", _senderName) }},
                         {"To", mailTo},
-                        {"Bcc", mailCc},
+                        {"Cc", mailCc},
                         {"TemplateID", mailJetMail.TemplateId},
                         {"TemplateLanguage", true},
                         {"Variables", new JObject
