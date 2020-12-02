@@ -107,8 +107,7 @@ namespace MailjetApiClient
                             new JObject {
                                 new JProperty("Email", _testingRedirectionMail),
                                 new JProperty("Name", _testingRedirectionMail) 
-                            }
-                            : null  
+                            } : null  
                         },
                         {"TemplateErrorDeliver", true}
                     }

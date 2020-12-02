@@ -10,7 +10,7 @@ Easily connect a .NET Core application with Mailjet
 
 To use this extension, define a `MailjetApi` section containing the following informations in your configuration. 
 
-```json
+```
 //  appSettings.json
 {
     "MailjetApi": {
@@ -85,6 +85,7 @@ var mailjetMail = new MailjetMail(){
     };
 
     UsersInCc = new List<User>(){new User(){Email = "mailCc@unitee.io"}},
+    UsersInBcc = new List<User>(){new User(){Email = "mailBcc@unitee.io"}},
     AttachmentFiles = new List<MailAttachmentFile>(){
          new MailAttachmentFile()
          {
