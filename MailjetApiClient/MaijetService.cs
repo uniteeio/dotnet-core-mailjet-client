@@ -63,6 +63,15 @@ namespace MailjetApiClient
                         new JArray { new JObject( new JProperty("Email", _testingRedirectionMail), new JProperty("Name", "TESTING") )} : 
                         new JArray { from userCc in mailJetMail.UsersInCc select new JObject( new JProperty("Email", userCc.Email), new JProperty("Name", userCc.Email) ) };
                 }
+
+                var mailBcc = new JArray ();
+                
+                if (mailJetMail.UsersInBcc != null && mailJetMail.UsersInBcc.Any())
+                {
+                    mailBcc = IsInTestMode() ? 
+                        new JArray { new JObject( new JProperty("Email", _testingRedirectionMail), new JProperty("Name", "TESTING") )} : 
+                        new JArray { from userBcc in mailJetMail.UsersInBcc select new JObject( new JProperty("Email", userBcc.Email), new JProperty("Name", userBcc.Email) ) };
+                }
                     
                 // Mail
                 var request = new MailjetRequest
@@ -75,7 +84,8 @@ namespace MailjetApiClient
                     {
                         {"From", new JObject { new JProperty("Email", _senderEmail), new JProperty("Name", _senderName) }},
                         {"To", mailTo},
-                        {"Bcc", mailCc},
+                        {"Cc", mailCc},
+                        {"Bcc", mailBcc},
                         {"TemplateID", mailJetMail.TemplateId},
                         {"TemplateLanguage", true},
                         {"Variables", new JObject
