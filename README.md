@@ -78,7 +78,7 @@ var mailjetMail = new MailjetMail(){
     TemplateId = MailjetTemplateId, 
     
     // Optionnal properties
-    Variables = new Dictionary<string, string>
+    Variables = new Dictionary<string, object>
     {
         { "fooTemplateVariableKey", "foovalue" },
         { "barTemplateVariableKey", "barvalue" }
