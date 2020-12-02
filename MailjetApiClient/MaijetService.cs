@@ -68,7 +68,7 @@ namespace MailjetApiClient
                 
                 if (mailJetMail.UsersInBcc != null && mailJetMail.UsersInBcc.Any())
                 {
-                    mailCc = IsInTestMode() ? 
+                    mailBcc = IsInTestMode() ? 
                         new JArray { new JObject( new JProperty("Email", _testingRedirectionMail), new JProperty("Name", "TESTING") )} : 
                         new JArray { from userBcc in mailJetMail.UsersInBcc select new JObject( new JProperty("Email", userBcc.Email), new JProperty("Name", userBcc.Email) ) };
                 }
