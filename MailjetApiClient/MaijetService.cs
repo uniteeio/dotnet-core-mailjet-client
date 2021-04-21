@@ -7,6 +7,7 @@ using MailjetApiClient.Exceptions;
 using MailjetApiClient.Extensions;
 using MailjetApiClient.Models;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace MailjetApiClient
 {
@@ -42,6 +43,19 @@ namespace MailjetApiClient
             return !string.IsNullOrEmpty(_testingRedirectionMail);
         }
         
+        public async Task SendMail(string email, int templateId, Dictionary<string, object> variables, List<Models.User> usersInCc = null, List<Models.User> usersInBcc = null)
+        {
+            var mailjetMail = new MailjetMail() {
+                Users = new List<Models.User>() { new Models.User() { Email = email }  },
+                TemplateId = templateId,
+                Variables = variables,
+                UsersInCc = usersInCc,
+                UsersInBcc = usersInBcc,
+            };
+
+            await SendMail(mailjetMail);
+        }
+
         public async Task SendMail(MailjetMail mailJetMail)
         {
             if (!_isSendingMailAllowed)
