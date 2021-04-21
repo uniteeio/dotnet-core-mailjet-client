@@ -7,7 +7,7 @@ namespace MailjetApiClient
     public interface IMailjetApiClient
     {
         Task SendMail(MailjetMail mailjetMail);
-        Task SendMail(string email, int templateId, Dictionary<string, object> variables, List<User> UsersInCc = null, List<User> UsersInBcc = null);
+        Task SendMail(string email, int templateId, object variables = null, List<User> UsersInCc = null, List<User> UsersInBcc = null);
         Task AddOrUpdateContact(MailjetContact mailjetContact);
         Task<int?> GetContactId(string contactEmail);
         Task DeleteContactFromContactList(string contactEmail, string contactListId);

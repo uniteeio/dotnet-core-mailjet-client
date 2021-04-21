@@ -11,7 +11,7 @@ using System.Collections.Generic;
 
 namespace MailjetApiClient
 {
-    public class MailjetService: IMailjetApiClient
+    public class MailjetService : IMailjetApiClient
     {
         private readonly MailjetClient _clientV3_1;
         private readonly MailjetClient _clientV3;
@@ -37,18 +37,21 @@ namespace MailjetApiClient
             _testingRedirectionMail = options.TestingRedirectionMail;
             _isSendingMailAllowed = options.IsSendingMailAllowed ?? true;
         }
-        
+
         private bool IsInTestMode()
         {
             return !string.IsNullOrEmpty(_testingRedirectionMail);
         }
-        
-        public async Task SendMail(string email, int templateId, Dictionary<string, object> variables, List<Models.User> usersInCc = null, List<Models.User> usersInBcc = null)
+
+        public async Task SendMail(string email, int templateId, object variables = null, List<Models.User> usersInCc = null, List<Models.User> usersInBcc = null)
         {
-            var mailjetMail = new MailjetMail() {
-                Users = new List<Models.User>() { new Models.User() { Email = email }  },
+            var variablesAsDictionary = variables?.GetType().GetProperties().ToDictionary(x => x.Name, x => x.GetValue(variables, null)); ;
+
+            var mailjetMail = new MailjetMail
+            {
+                Users = new List<Models.User> { new Models.User() { Email = email } },
                 TemplateId = templateId,
-                Variables = variables,
+                Variables = variablesAsDictionary,
                 UsersInCc = usersInCc,
                 UsersInBcc = usersInBcc,
             };
@@ -64,29 +67,39 @@ namespace MailjetApiClient
             }
             try
             {
-                var mailTo = IsInTestMode() ? 
-                    new JArray{ new JObject( new JProperty("Email", _testingRedirectionMail), new JProperty("Name", " ") )} : 
-                    new JArray { from user in mailJetMail.Users select new JObject( new JProperty("Email", user.Email), new JProperty("Name", user.Email) ) };
+                var mailTo = IsInTestMode() ?
+                    new JArray { new JObject(new JProperty("Email", _testingRedirectionMail), new JProperty("Name", " ")) } :
+                    new JArray { from user in mailJetMail.Users select new JObject(new JProperty("Email", user.Email), new JProperty("Name", user.Email)) };
 
 
-                var mailCc = new JArray ();
-                    
+                var mailCc = new JArray();
+
                 if (mailJetMail.UsersInCc != null && mailJetMail.UsersInCc.Any())
                 {
-                    mailCc = IsInTestMode() ? 
-                        new JArray { new JObject( new JProperty("Email", _testingRedirectionMail), new JProperty("Name", "TESTING") )} : 
-                        new JArray { from userCc in mailJetMail.UsersInCc select new JObject( new JProperty("Email", userCc.Email), new JProperty("Name", userCc.Email) ) };
+                    mailCc = IsInTestMode() ?
+                        new JArray { new JObject(new JProperty("Email", _testingRedirectionMail), new JProperty("Name", "TESTING")) } :
+                        new JArray { from userCc in mailJetMail.UsersInCc select new JObject(new JProperty("Email", userCc.Email), new JProperty("Name", userCc.Email)) };
                 }
 
-                var mailBcc = new JArray ();
-                
+                var mailBcc = new JArray();
+
                 if (mailJetMail.UsersInBcc != null && mailJetMail.UsersInBcc.Any())
                 {
-                    mailBcc = IsInTestMode() ? 
-                        new JArray { new JObject( new JProperty("Email", _testingRedirectionMail), new JProperty("Name", "TESTING") )} : 
-                        new JArray { from userBcc in mailJetMail.UsersInBcc select new JObject( new JProperty("Email", userBcc.Email), new JProperty("Name", userBcc.Email) ) };
+                    mailBcc = IsInTestMode() ?
+                        new JArray { new JObject(new JProperty("Email", _testingRedirectionMail), new JProperty("Name", "TESTING")) } :
+                        new JArray { from userBcc in mailJetMail.UsersInBcc select new JObject(new JProperty("Email", userBcc.Email), new JProperty("Name", userBcc.Email)) };
                 }
-                    
+
+                JObject variables = null;
+
+                if (mailJetMail.Variables != null)
+                {
+                    variables = new JObject
+                    {
+                        from key in mailJetMail.Variables.Keys select new JProperty(key, mailJetMail.Variables[key])
+                    };
+                }
+
                 // Mail
                 var request = new MailjetRequest
                 {
@@ -102,31 +115,27 @@ namespace MailjetApiClient
                         {"Bcc", mailBcc},
                         {"TemplateID", mailJetMail.TemplateId},
                         {"TemplateLanguage", true},
-                        {"Variables", new JObject
-                            {
-                                from key in mailJetMail.Variables.Keys select new JProperty(key, mailJetMail.Variables[key])
-                            }
-                        },
-                        {"Attachments", !mailJetMail.AttachmentFiles.Any() ? null : 
-                                new JArray { from file in mailJetMail.AttachmentFiles select 
+                        {"Variables", variables },
+                        {"Attachments", !mailJetMail.AttachmentFiles.Any() ? null :
+                                new JArray { from file in mailJetMail.AttachmentFiles select
                                 new JObject
                                 {
                                     {"ContentType", file.ContentType},
-                                    {"Filename", file.Filename},                                
-                                    {"Base64Content", file.Base64Content}                                
+                                    {"Filename", file.Filename},
+                                    {"Base64Content", file.Base64Content}
                                 }
                             }
-                        }, 
-                        {"TemplateErrorReporting", IsInTestMode() ? 
+                        },
+                        {"TemplateErrorReporting", IsInTestMode() ?
                             new JObject {
                                 new JProperty("Email", _testingRedirectionMail),
-                                new JProperty("Name", _testingRedirectionMail) 
-                            } : null  
+                                new JProperty("Name", _testingRedirectionMail)
+                            } : null
                         },
                         {"TemplateErrorDeliver", true}
                     }
                 });
-                
+
                 var response = await _clientV3_1.PostAsync(request);
                 if (!response.IsSuccessStatusCode)
                 {
@@ -136,9 +145,9 @@ namespace MailjetApiClient
             catch (Exception e)
             {
                 throw new MailjetApiClientException(e.Message, e.InnerException);
-            }     
+            }
         }
-        
+
         public async Task AddOrUpdateContact(MailjetContact mailjetContact)
         {
             int? contactId = GetContactId(mailjetContact.ContactEmail).Result;
@@ -146,13 +155,13 @@ namespace MailjetApiClient
             {
                 contactId = await CreateContact(mailjetContact);
             }
-            
+
             //Add To a contact list
             if (!string.IsNullOrEmpty(mailjetContact.ContactListId))
             {
-                 await AddContactToAMailingList(mailjetContact, contactId.Value);
-            }    
-            
+                await AddContactToAMailingList(mailjetContact, contactId.Value);
+            }
+
             //update custom contact properties
             if (mailjetContact.CustomProperties.Keys.Any())
             {
@@ -165,11 +174,11 @@ namespace MailjetApiClient
             var enumerator = mailjetContact.CustomProperties.GetEnumerator();
             var request = new MailjetRequest
             {
-                Resource =  new ResourceInfo("contactdata/"+contactId),
+                Resource = new ResourceInfo("contactdata/" + contactId),
             }
             .Property(Contactdata.Data,
-            
-                new JArray { from key in mailjetContact.CustomProperties.Keys select new JObject( new JProperty("Name", key), new JProperty("Value", mailjetContact.CustomProperties[key]))}
+
+                new JArray { from key in mailjetContact.CustomProperties.Keys select new JObject(new JProperty("Name", key), new JProperty("Value", mailjetContact.CustomProperties[key])) }
             );
 
             var response = await _clientV3.PutAsync(request);
@@ -182,9 +191,9 @@ namespace MailjetApiClient
         private async Task<int> CreateContact(MailjetContact mailjetContact)
         {
             var request = new MailjetRequest
-                {
-                    Resource = Contact.Resource,
-                }
+            {
+                Resource = Contact.Resource,
+            }
                 .Property(Contact.IsExcludedFromCampaigns, mailjetContact.IsExcluded)
                 .Property(Contact.Name, mailjetContact.ContactName)
                 .Property(Contact.Email, mailjetContact.ContactEmail);
@@ -192,11 +201,11 @@ namespace MailjetApiClient
             var response = await _clientV3.PostAsync(request);
             if (!response.IsSuccessStatusCode)
             {
-                
+
                 throw new MailjetApiClientException(response.FormatForLogs());
             }
             var responseData = response.GetData();
-            return (int) responseData[0]["ID"];
+            return (int)responseData[0]["ID"];
         }
 
         private async Task AddContactToAMailingList(MailjetContact mailjetContact, int id)
@@ -233,7 +242,7 @@ namespace MailjetApiClient
             {
                 var request = new MailjetRequest
                 {
-                    Resource = new ResourceInfo("contact/"+contactEmail),
+                    Resource = new ResourceInfo("contact/" + contactEmail),
                 };
                 var response = await _clientV3.GetAsync(request);
                 if (!response.IsSuccessStatusCode)
@@ -249,12 +258,12 @@ namespace MailjetApiClient
             }
         }
 
-        
+
         // Mailjet doesn't allow deleting a contact with their API (except in V4), you still need to delete it manually, but at least it won't recieve any mail from this list
         //TODO: add a method using HTTP client to delete the contact (V4 API is only accepting http requests). So you need to create the HTTP client too
         public async Task DeleteContactFromContactList(string contactEmail, string contactListId)
         {
-            var id =  Convert.ToInt64(GetContactId(contactEmail));
+            var id = Convert.ToInt64(GetContactId(contactEmail));
             var request = new MailjetRequest
             {
                 Resource = Contactdata.Resource,
