@@ -72,11 +72,12 @@ You can use the `SendMail` method by following the example below to send an emai
 :information_source: Some parameters are optionals (attachementFiles, variables, Cc mails)
 
 ```cs
-var mailjetMail = new MailjetMail(){
+var mailjetMail = new MailjetMail()
+{
     // Required properties
-    Users = new List<User>(){new User{Email = "mailTo@unitee.io"}}, 
-    TemplateId = MailjetTemplateId, 
-    
+    Users = new List<User>() { new User { Email = "mailTo@unitee.io" } },
+    TemplateId = MailjetTemplateId,
+
     // Optionnal properties
     Variables = new Dictionary<string, object>
     {
@@ -84,8 +85,8 @@ var mailjetMail = new MailjetMail(){
         { "barTemplateVariableKey", "barvalue" }
     };
 
-    UsersInCc = new List<User>(){new User(){Email = "mailCc@unitee.io"}},
-    UsersInBcc = new List<User>(){new User(){Email = "mailBcc@unitee.io"}},
+    UsersInCc = new List<User>() { new User() { Email = "mailCc@unitee.io" } },
+    UsersInBcc = new List<User>() { new User() { Email = "mailBcc@unitee.io" } },
     AttachmentFiles = new List<MailAttachmentFile>(){
          new MailAttachmentFile()
          {
@@ -98,6 +99,22 @@ var mailjetMail = new MailjetMail(){
 
 await _iMailjetApiClient.SendMail(mailjetMail);
 ```
+
+You can also use the following overload (note that 'variables' is no longer a Dictionary)
+
+```cs
+var email = "mailTo@unitee.io";
+var templateId = 1337;
+var variables = new { fooTemplateVariableKey = "foovalue", barTemplateVariableKey = "barvalue" };
+
+var usersInCc = new List<User>() { new User() { Email = "mailCc@unitee.io" } };
+var usersInBcc = new List<User>() { new User() { Email = "mailBcc@unitee.io" } };
+
+await _iMailjetApiClient.SendMail(email, templateId);
+await _iMailjetApiClient.SendMail(email, templatedId, variables);
+await _iMailjetApiClient.SendMail(email, templatedId, variables, usersInCc);
+await _iMailjetApiClient.SendMail(email, templatedId, variables, usersInCc, usersInBcc);
+```
     
 ### Contacts Features
 #### Create or update a contact 
@@ -105,23 +122,22 @@ await _iMailjetApiClient.SendMail(mailjetMail);
 You can use the `AddOrUpdateContact` method by following the example below to add or update a contact in mailjet and mailings lists.
 
 ```cs
-var mailjetContact = new MailjetContact(){
-    
+var mailjetContact = new MailjetContact()
+{
     // Required properties
     ContactEmail = "contact@unitee.io",
-    
+
     // Optionnal properties
     ContactName = "John Doe",
-    ContactListId = 1, 
+    ContactListId = 1,
     IsExcluded = false,
     CustomProperties = new Dictionary<string, string>
        {
            { "customProperties1", "value1" },
            { "customProperties2", "value2" }
        };
-
-
 };
+
 await _iMailjetApiClient.AddContact(mailjetContact);
 ```
 
