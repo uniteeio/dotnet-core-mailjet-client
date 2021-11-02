@@ -55,6 +55,14 @@ public void ConfigureServices(IServiceCollection services)
 }
 ``` 
 
+For Dotnet core >= 6:
+
+```cs
+builder.Services.AddMailjetApiClient(builder.Configuration);
+```
+
+in `Program.cs`.
+
 ## How to use
 
 ### Inject the service
