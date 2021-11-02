@@ -4,6 +4,12 @@
 
 Easily connect a .NET Core application with Mailjet
 
+## Install
+
+```bash
+dotnet add package Unitee.MailjetApiClient.ApiClient
+```
+
 ## Configuration
 
 ### Set up Mailjet variables in `appSettings.json`
