@@ -26,3 +26,6 @@ jobs:
           cd MailjetApiClient
           dotnet build -c Release -p:Version=${RELEASE_VERSION}
           dotnet pack -c Release -p:Version=${RELEASE_VERSION} -o out
+
+      - name: Push generated package
+        run: dotnet nuget push /home/runner/work/dotnet-core-mailjet-client/dotnet-core-mailjet-client/MailjetApiClient/out/*.nupkg -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate --no-symbols true
