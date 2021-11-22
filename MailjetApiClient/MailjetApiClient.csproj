@@ -3,9 +3,7 @@
         <TargetFrameworks>net5.0;netcoreapp2.2;netcoreapp2.1;netstandard2.1;netstandard2.0;</TargetFrameworks>
         <Authors>CorentinJ, Unitee</Authors>
         <PackageId>Unitee.MailjetApiClient.ApiClient</PackageId>
-        <Version>4.2.0</Version>
         <NeutralLanguage>en-US</NeutralLanguage>
-        <VersionPrefix>4.2.0</VersionPrefix>
         <Title>.NET Core Mailjet API client</Title>
         <Description>A .NET Core api client for Mailjet API</Description>
         <PackageProjectUrl>https://www.nuget.org/packages/Unitee.MailjetApiClient.ApiClient/</PackageProjectUrl>
