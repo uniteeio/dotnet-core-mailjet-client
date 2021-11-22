@@ -23,6 +23,6 @@ jobs:
 
       - name: Build and generate NuGet package
         run: |  
-          cd dotnet-img-proxy
+          cd MailjetApiClient
           dotnet build -c Release -p:Version=${RELEASE_VERSION}
           dotnet pack -c Release -p:Version=${RELEASE_VERSION} -o out
