@@ -3,7 +3,7 @@ name: pushing tag version for release
 on:
   push:
     branches:
-      - main
+      - master
 
     tags:
       - v*
