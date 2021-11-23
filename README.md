@@ -169,3 +169,15 @@ You can use the `DeleteContactFromContactList` to remove a contact from mailing 
 ```cs
 await _iMailjetApiClient.DeleteContactFromContactList("contact@unitee.io", "idMailingList");
 ```
+
+
+# Devlopment
+
+## Testing
+
+Edit the MailjetApiClientTest.cs and replace the empty field of the options with your mailjet configuration as well as replace the templateId.
+
+👏 Don't 👏 Push 👏 Your 👏 Api 👏 Key
+
+Run `dotnet test` and expect to receive a mail at the specified mail address.
+
