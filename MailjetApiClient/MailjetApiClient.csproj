@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFrameworks>net5.0;netcoreapp2.2;netcoreapp2.1;netstandard2.1;netstandard2.0;</TargetFrameworks>
+        <TargetFrameworks>net6.0</TargetFrameworks>
         <Authors>CorentinJ, Unitee</Authors>
         <PackageId>Unitee.MailjetApiClient.ApiClient</PackageId>
         <NeutralLanguage>en-US</NeutralLanguage>
@@ -13,23 +13,10 @@
         <GenerateErrorForMissingTargetingPacks>false</GenerateErrorForMissingTargetingPacks>
     </PropertyGroup>
 
-    <ItemGroup Condition=" '$(TargetFramework)' == 'net5.0' ">
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0-preview.6.20305.6" />
-        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="5.0.0-preview.6.20305.6" />
-    </ItemGroup>
-
-    <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'netstandard2.1' or '$(TargetFramework)' == 'netcoreapp2.2'">
-        <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.0" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1" />
-        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.1.1" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
-        <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.4" />
-    </ItemGroup>
-    
     <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="6.0.0" />
         <PackageReference Include="Mailjet.Api" Version="1.2.2" />
         <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     </ItemGroup>
