@@ -1,0 +1,17 @@
+services:
+  dev:
+    image: techunitee/dotnet6.0-node14
+    command: tail -f /dev/null
+    volumes:
+      - ../../:/app
+      - $HOME/.ssh:/root/.ssh
+      - nuget-data:/root/.nuget
+      - vscode:/root/.vscode-server
+
+
+    working_dir: /app/
+    user: 1000:1000
+
+volumes:
+  nuget-data:
+  vscode:

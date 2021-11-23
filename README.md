@@ -171,7 +171,11 @@ await _iMailjetApiClient.DeleteContactFromContactList("contact@unitee.io", "idMa
 ```
 
 
-# Devlopment
+# Development
+
+## Environment
+
+A dev container can be started at Docker/MailjetApiClient/ with docker-compose up -d for use with vscode remote.
 
 ## Testing
 
