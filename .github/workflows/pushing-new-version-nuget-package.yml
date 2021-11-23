@@ -14,6 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
 
       - id: get_version
         uses: battila7/get-version-action@v2
