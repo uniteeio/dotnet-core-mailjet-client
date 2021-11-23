@@ -3,22 +3,21 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
-namespace MailjetApiClient
+namespace MailjetApiClient;
+
+public static class IServiceCollectionExtensions
 {
-    public static class IServiceCollectionExtensions
+    private const string Identifier = "MailjetApi";
+    
+    public static IServiceCollection AddMailjetApiClient(this IServiceCollection services, IConfiguration configuration)
     {
-        private const string Identifier = "MailjetApi";
-        
-        public static IServiceCollection AddMailjetApiClient(this IServiceCollection services, IConfiguration configuration)
+        services.AddOptions();
+        services.Configure<MailjetOptions>(configuration.GetSection(Identifier));
+        services.TryAddTransient<IMailjetApiClient>((sp) =>
         {
-            services.AddOptions();
-            services.Configure<MailjetOptions>(configuration.GetSection(Identifier));
-            services.TryAddTransient<IMailjetApiClient>((sp) =>
-            {
-                var options = sp.GetService<IOptions<MailjetOptions>>().Value;
-                return new MailjetService(options);
-            });
-            return services;
-        }
+            var options = sp.GetService<IOptions<MailjetOptions>>().Value;
+            return new MailjetService(options);
+        });
+        return services;
     }
 }
