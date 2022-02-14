@@ -1,0 +1,5 @@
+{
+    "workspaceFolder": "/app/MailjetApiClient",
+    "dockerComposeFile": "../../Docker/MailjetApiClient/docker-compose.yml",
+    "service": "dev"
+}
