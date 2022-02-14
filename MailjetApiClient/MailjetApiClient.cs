@@ -86,10 +86,7 @@ public class MailjetApiClient : IMailjetApiClient
 
             if (mailJetMail.Variables != null)
             {
-                variables = new JObject
-                {
-                    from key in mailJetMail.Variables.Keys select new JProperty(key, mailJetMail.Variables[key])
-                };
+                variables = JObject.FromObject(mailJetMail.Variables);
             }
 
             // Mail
