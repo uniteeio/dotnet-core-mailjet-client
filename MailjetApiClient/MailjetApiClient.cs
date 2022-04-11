@@ -8,6 +8,7 @@ using MailjetApiClient.Extensions;
 using MailjetApiClient.Models;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace MailjetApiClient;
 
@@ -37,13 +38,11 @@ public class MailjetApiClient : IMailjetApiClient
 
     public async Task SendMail(string email, int templateId, object variables = null, List<Models.User> usersInCc = null, List<Models.User> usersInBcc = null)
     {
-        var variablesAsDictionary = variables?.GetType().GetProperties().ToDictionary(x => x.Name, x => x.GetValue(variables, null)); ;
-
         var mailjetMail = new MailjetMail
         {
             Users = new List<Models.User> { new Models.User() { Email = email } },
             TemplateId = templateId,
-            Variables = variablesAsDictionary,
+            Variables = variables,
             UsersInCc = usersInCc,
             UsersInBcc = usersInBcc,
         };
@@ -51,79 +50,59 @@ public class MailjetApiClient : IMailjetApiClient
         await SendMail(mailjetMail);
     }
 
-    public async Task SendMail(MailjetMail mailJetMail)
+    public MailjetMessage<object> ConvertToMailjetMessage(MailjetMail mailjetMail)
+    {
+        var mailjetMessage = new MailjetMessage<object>
+        {
+            Variables = mailjetMail.Variables,
+            Attachements = mailjetMail?.AttachmentFiles?.Select(x => new MailjetAttachement
+            {
+                ContentType = x.ContentType,
+                Filename = x.Filename,
+                Base64Content = x.Base64Content
+            })?.ToList(),
+            TemplateId = mailjetMail.TemplateId,
+            To = mailjetMail.Users?.Select(x => new MailjetMailUser { Email = x.Email, Name = x.Email })?.ToList(),
+            Bcc = mailjetMail.UsersInBcc?.Select(x => new MailjetMailUser { Email = x.Email, Name = x.Email })?.ToList(),
+            Cc = mailjetMail.UsersInCc?.Select(x => new MailjetMailUser { Email = x.Email, Name = x.Email })?.ToList(),
+        };
+
+        if (!string.IsNullOrEmpty(_senderEmail) && !string.IsNullOrEmpty(_senderName))
+        {
+            mailjetMessage.From = new MailjetMailUser { Email = _senderEmail, Name = _senderName };
+        }
+
+        if (IsInTestMode())
+        {
+            mailjetMessage.Bcc = null;
+            mailjetMessage.Cc = null;
+            mailjetMessage.To = new List<MailjetMailUser>() { new MailjetMailUser
+            {
+                Email = _testingRedirectionMail,
+                Name = _testingRedirectionMail,
+            }};
+        }
+
+        return mailjetMessage;
+    }
+
+    public async Task SendMail(MailjetMail mailjetMail)
     {
         if (!_isSendingMailAllowed)
         {
             return;
         }
+
+        var email = ConvertToMailjetMessage(mailjetMail);
+        var emails = new List<MailjetMessage<object>> { email };
+
         try
         {
-            var mailTo = IsInTestMode() ?
-                new JArray { new JObject(new JProperty("Email", _testingRedirectionMail), new JProperty("Name", " ")) } :
-                new JArray { from user in mailJetMail.Users select new JObject(new JProperty("Email", user.Email), new JProperty("Name", user.Email)) };
-
-
-            var mailCc = new JArray();
-
-            if (mailJetMail.UsersInCc != null && mailJetMail.UsersInCc.Any())
-            {
-                mailCc = IsInTestMode() ?
-                    new JArray { new JObject(new JProperty("Email", _testingRedirectionMail), new JProperty("Name", "TESTING")) } :
-                    new JArray { from userCc in mailJetMail.UsersInCc select new JObject(new JProperty("Email", userCc.Email), new JProperty("Name", userCc.Email)) };
-            }
-
-            var mailBcc = new JArray();
-
-            if (mailJetMail.UsersInBcc != null && mailJetMail.UsersInBcc.Any())
-            {
-                mailBcc = IsInTestMode() ?
-                    new JArray { new JObject(new JProperty("Email", _testingRedirectionMail), new JProperty("Name", "TESTING")) } :
-                    new JArray { from userBcc in mailJetMail.UsersInBcc select new JObject(new JProperty("Email", userBcc.Email), new JProperty("Name", userBcc.Email)) };
-            }
-
-            JObject variables = null;
-
-            if (mailJetMail.Variables != null)
-            {
-                variables = JObject.FromObject(mailJetMail.Variables);
-            }
-
-            // Mail
             var request = new MailjetRequest
             {
                 Resource = Send.Resource
             }
-            .Property(Send.Messages, new JArray
-            {
-                new JObject
-                {
-                    {"From", new JObject { new JProperty("Email", _senderEmail), new JProperty("Name", _senderName) }},
-                    {"To", mailTo},
-                    {"Cc", mailCc},
-                    {"Bcc", mailBcc},
-                    {"TemplateID", mailJetMail.TemplateId},
-                    {"TemplateLanguage", true},
-                    {"Variables", variables },
-                    {"Attachments", !mailJetMail.AttachmentFiles.Any() ? null :
-                            new JArray { from file in mailJetMail.AttachmentFiles select
-                            new JObject
-                            {
-                                {"ContentType", file.ContentType},
-                                {"Filename", file.Filename},
-                                {"Base64Content", file.Base64Content}
-                            }
-                        }
-                    },
-                    {"TemplateErrorReporting", IsInTestMode() ?
-                        new JObject {
-                            new JProperty("Email", _testingRedirectionMail),
-                            new JProperty("Name", _testingRedirectionMail)
-                        } : null
-                    },
-                    {"TemplateErrorDeliver", true}
-                }
-            });
+            .Property(Send.Messages, JArray.FromObject(emails));
 
             var response = await _clientV3_1.PostAsync(request);
             if (!response.IsSuccessStatusCode)
