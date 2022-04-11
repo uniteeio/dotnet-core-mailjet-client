@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using MailjetApiClient.Models;
+using static MailjetApiClient.MailjetApiClient;
 
 namespace MailjetApiClient.test;
 
@@ -18,41 +20,58 @@ public class NestedClass
 public class UnitTest1
 {
     [Fact]
-    async public Task SendMail()
+    public void ShoulConvertToCorrectMailjetEntity()
     {
         var options = new MailjetOptions
         {
             ApiKeyPublic = "",
             ApiKeyPrivate = "",
-            TestingRedirectionMail = "turbo.test@yopmail.com",
-            SenderEmail = "",
-            SenderName = "",
+            IsSendingMailAllowed = true
+        };
+
+        var client = new MailjetService(options);
+
+        var mailjetMail = new MailjetMail()
+        {
+            Users = new List<User> { new User { Email = "toto@toto.com" } },
+        };
+
+        var converted = client.ConvertToMailjetMessage(mailjetMail);
+
+        Assert.Null(converted.From);
+        Assert.IsType<List<MailjetMailUser>>(converted.To);
+        Assert.Equal("toto@toto.com", converted.To[0].Email);
+    }
+
+    [Fact]
+    public void ShouldConvertMailjetMessageToCorrectJson()
+    {
+        var options = new MailjetOptions
+        {
+            ApiKeyPublic = "",
+            ApiKeyPrivate = "",
             IsSendingMailAllowed = true,
         };
 
         var client = new MailjetService(options);
-        await client.SendMail("t.dolley@unitee.io", 0);
-    }
 
-    [Fact]
-    public async Task Accept_NestedVariables()
-    {
-
-        var nestedInstance = new NestedClass
+        var mailjetMail = new MailjetMail()
         {
-            I = 42,
-            S = "Hello"
+            Users = new List<User> { new User { Email = "toto@toto.com" } },
+            Variables = new NestedClass
+            {
+                I = 42,
+                S = "toto"
+            }
         };
 
-        var x = new Dictionary<string, object>
-        {
-            { "hello", "world" },
-            { "nested", nestedInstance }
-        };
+        var converted = client.ConvertToMailjetMessage(mailjetMail);
 
-        var serialized = JObject.FromObject(x);
+        var json = JObject.FromObject(converted);
 
-        Assert.Equal("world", serialized["hello"].ToString());
-        Assert.Equal("Hello", serialized["nested"]["field"].ToString());
+        Assert.Equal("toto", json["Variables"]?["field"]?.Value<string>());
+        Assert.Equal(42, json["Variables"]?["I"]?.Value<int>());
+        Assert.Equal("toto@toto.com", json["To"]?[0]?["Email"]?.Value<string>());
+        Assert.False(json.ContainsKey("From"));
     }
 }
