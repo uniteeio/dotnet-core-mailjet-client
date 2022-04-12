@@ -1,6 +1,6 @@
 # Mailjet client
 
-![Nuget](https://img.shields.io/nuget/v/Unitee.MailjetApiClient.ApiClient)
+![Nuget](https://img.shields.io/nuget/v/Unitee.MailjetApiClient.ApiClient?cachebuster=1)
 
 Easily connect a .NET Core application with Mailjet
 
@@ -12,56 +12,43 @@ dotnet add package Unitee.MailjetApiClient.ApiClient
 
 ## Configuration
 
-### Set up Mailjet variables in `appSettings.json`
+### Configure using `appSettings.json`
 
-To use this extension, define a `MailjetApi` section containing the following informations in your configuration. 
+Define a `MailjetApi` section in appsettings.
 
-```
-//  appSettings.json
+```json5
 {
     "MailjetApi": {
-        
-        // Mandatory parameters
-        "SenderEmail": "sendermail@unitee.io", // email address used to send mails
-        "SenderName": "unitee.io", // displayed name
+        // required
         "ApiKeyPublic": "xxxxxxxxxxxxxxxxxxx", // mailjet public key (https://app.mailjet.com/account/api_keys)
         "ApiKeyPrivate": "xxxxxxxxxxxxxxxxxx", // mailjet private key (https://app.mailjet.com/account/api_keys)
-        
-        // Optionnal parameters
+       
+        // optional (if null, use sender defined in the template) 
+        "SenderEmail": "sendermail@unitee.io", // email address used to send mails
+        "SenderName": "unitee.io", // displayed name
+       
+         // optional (used in development)
         "IsSendingMailAllowed": "false", // disallow sending mails
-        "TestingRedirectionMail": "john.doo@unitee.io" // mail used to redirect all mails. Useful for testing 
+        "TestingRedirectionMail": "john.doo@unitee.io" // redirect all mails
     }
 }
 ```
 
-### Add Extensions in `Startup.cs`
+### Configure using env
 
-```cs
-private IConfiguration Configuration { get; }
+Also, the configuration can be defined as env, for example:
 
-public Startup(IConfiguration configuration)
-{
-    Configuration = configuration;
-}
+```
+MailjetApi__ApiKeyPublic=xxxxxxx
+...
+```
 
 
-public void ConfigureServices(IServiceCollection services)
-{
-    [...]
-
-    services.AddMailjetApiClient(Configuration);
-
-    [...]
-}
-``` 
-
-For Dotnet core >= 6:
+### Add Extensions in `Program.cs`
 
 ```cs
 builder.Services.AddMailjetApiClient(builder.Configuration);
 ```
-
-in `Program.cs`.
 
 ## How to use
 
@@ -78,31 +65,29 @@ public FooService(IMailjetApiClient iMailjetApiClient)
 }
 ``` 
 
-### Mailing Features
-#### Send an email
+## Features
+
+### Send an email
 
 You can use the `SendMail` method by following the example below to send an email via a Mailjet Template.
 
 :information_source: Some parameters are optionals (attachementFiles, variables, Cc mails)
 
 ```cs
-var mailjetMail = new MailjetMail()
+var mailjetMail = new MailjetMail
 {
-    // Required properties
+    // required properties
     Users = new List<User>() { new User { Email = "mailTo@unitee.io" } },
     TemplateId = MailjetTemplateId,
 
-    // Optionnal properties
-    Variables = new Dictionary<string, object>
-    {
-        { "fooTemplateVariableKey", "foovalue" },
-        { "barTemplateVariableKey", "barvalue" }
-    };
+    // optionnal properties
+    Variables = new { hello = "world" },
 
-    UsersInCc = new List<User>() { new User() { Email = "mailCc@unitee.io" } },
-    UsersInBcc = new List<User>() { new User() { Email = "mailBcc@unitee.io" } },
-    AttachmentFiles = new List<MailAttachmentFile>(){
-         new MailAttachmentFile()
+    UsersInCc = new List<User>() { new User { Email = "mailCc@unitee.io" } },
+    UsersInBcc = new List<User>() { new User { Email = "mailBcc@unitee.io" } },
+    AttachmentFiles = new List<MailAttachmentFile>() 
+    {
+         new MailAttachmentFile
          {
              Filename = filename,
              ContentType = contentType,
@@ -114,15 +99,15 @@ var mailjetMail = new MailjetMail()
 await _iMailjetApiClient.SendMail(mailjetMail);
 ```
 
-You can also use the following overload (note that 'variables' is no longer a Dictionary)
+You can also use the shorthand methods:
 
 ```cs
 var email = "mailTo@unitee.io";
 var templateId = 1337;
-var variables = new { fooTemplateVariableKey = "foovalue", barTemplateVariableKey = "barvalue" };
+var variables = new { foo = "foo", bar = "bar" };
 
-var usersInCc = new List<User>() { new User() { Email = "mailCc@unitee.io" } };
-var usersInBcc = new List<User>() { new User() { Email = "mailBcc@unitee.io" } };
+var usersInCc = new List<User>() { new User { Email = "mailCc@unitee.io" } };
+var usersInBcc = new List<User>() { new User { Email = "mailBcc@unitee.io" } };
 
 await _iMailjetApiClient.SendMail(email, templateId);
 await _iMailjetApiClient.SendMail(email, templatedId, variables);
@@ -130,8 +115,7 @@ await _iMailjetApiClient.SendMail(email, templatedId, variables, usersInCc);
 await _iMailjetApiClient.SendMail(email, templatedId, variables, usersInCc, usersInBcc);
 ```
     
-### Contacts Features
-#### Create or update a contact 
+### Create or update a contact 
 
 You can use the `AddOrUpdateContact` method by following the example below to add or update a contact in mailjet and mailings lists.
 
@@ -146,23 +130,23 @@ var mailjetContact = new MailjetContact()
     ContactListId = 1,
     IsExcluded = false,
     CustomProperties = new Dictionary<string, string>
-       {
-           { "customProperties1", "value1" },
-           { "customProperties2", "value2" }
-       };
+    {
+        { "customProperties1", "value1" },
+        { "customProperties2", "value2" }
+    };
 };
 
 await _iMailjetApiClient.AddContact(mailjetContact);
 ```
 
-#### Get contact id by mail
+### Get contact id by mail
 
 You can use the `GetContactId` to get id contact with mail.
 
 ```cs
-await _iMailjetApiClient.GetContactId("contact@unitee.io");
+var id = await _iMailjetApiClient.GetContactId("contact@unitee.io");
 ```
-#### Remove contact from mailings list
+### Remove contact from mailings list
 
 You can use the `DeleteContactFromContactList` to remove a contact from mailing list.
 
@@ -177,11 +161,5 @@ await _iMailjetApiClient.DeleteContactFromContactList("contact@unitee.io", "idMa
 
 A dev container can be started at Docker/MailjetApiClient/ with docker-compose up -d for use with vscode remote.
 
-## Testing
-
-Edit the MailjetApiClientTest.cs and replace the empty field of the options with your mailjet configuration as well as replace the templateId.
-
-👏 Don't 👏 Push 👏 Your 👏 Api 👏 Key
-
-Run `dotnet test` and expect to receive a mail at the specified mail address.
+Run `dotnet test`.
 
