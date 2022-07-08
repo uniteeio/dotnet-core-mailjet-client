@@ -255,7 +255,7 @@ public class MailjetApiClient : IMailjetApiClient
     //TODO: add a method using HTTP client to delete the contact (V4 API is only accepting http requests). So you need to create the HTTP client too
     public async Task DeleteContactFromContactList(string contactEmail, string contactListId)
     {
-        var id = Convert.ToInt64(GetContactId(contactEmail));
+        var id = Convert.ToInt64(await GetContactId(contactEmail));
         var request = new MailjetRequest
         {
             Resource = Contactdata.Resource,
