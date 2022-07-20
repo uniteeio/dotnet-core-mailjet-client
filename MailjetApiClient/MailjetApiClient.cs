@@ -247,7 +247,7 @@ public class MailjetApiClient : IMailjetApiClient
         }
         catch (FlurlHttpException e)
         {
-            throw new MailjetApiClientException("Fail to call the mailjet API.", e);
+            throw new MailjetApiClientException("Fail to call the Mailjet API.", e);
         }
     }
 }
