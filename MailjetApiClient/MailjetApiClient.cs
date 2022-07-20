@@ -239,8 +239,15 @@ public class MailjetApiClient : IMailjetApiClient
             throw new MailjetApiClientException($"Contact {contactEmail} cannot be found.");
         }
 
-        await _httpClient
-            .Request("contacts", maybeContactId)
-            .DeleteAsync();
+        try
+        {
+            await _httpClient
+                .Request("contacts", maybeContactId)
+                .DeleteAsync();
+        }
+        catch (FlurlHttpException e)
+        {
+            throw new MailjetApiClientException("Fail to call the mailjet API.", e);
+        }
     }
 }
