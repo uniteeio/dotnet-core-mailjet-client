@@ -8,7 +8,7 @@ using MailjetApiClient.Extensions;
 using MailjetApiClient.Models;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using Flurl.Http;
 
 namespace MailjetApiClient;
 
@@ -16,10 +16,13 @@ public class MailjetApiClient : IMailjetApiClient
 {
     private readonly MailjetClient _clientV3_1;
     private readonly MailjetClient _clientV3;
+
     private readonly string _senderEmail;
     private readonly string _senderName;
     private readonly string _testingRedirectionMail;
     private readonly bool _isSendingMailAllowed;
+
+    private readonly FlurlClient _httpClient;
 
     public MailjetApiClient(string publicKey, string privateKey, string senderEmail, string senderName, string testingRedirectionMail, bool? isSendingMailAllowed = null)
     {
@@ -29,6 +32,8 @@ public class MailjetApiClient : IMailjetApiClient
         _senderName = senderName;
         _testingRedirectionMail = testingRedirectionMail;
         _isSendingMailAllowed = isSendingMailAllowed ?? true;
+
+        _httpClient = new FlurlClient("https://api.mailjet.com/v4/").WithBasicAuth(publicKey, privateKey);
     }
 
     private bool IsInTestMode()
@@ -226,21 +231,23 @@ public class MailjetApiClient : IMailjetApiClient
         }
     }
 
-
-    // Mailjet doesn't allow deleting a contact with their API (except in V4), you still need to delete it manually, but at least it won't recieve any mail from this list
-    //TODO: add a method using HTTP client to delete the contact (V4 API is only accepting http requests). So you need to create the HTTP client too
     public async Task DeleteContactFromContactList(string contactEmail, string contactListId)
     {
-        var id = Convert.ToInt64(await GetContactId(contactEmail));
-        var request = new MailjetRequest
+        var maybeContactId = await GetContactId(contactEmail);
+        if (maybeContactId is null)
         {
-            Resource = Contactdata.Resource,
-            ResourceId = ResourceId.Numeric(id)
-        };
-        var response = await _clientV3.DeleteAsync(request);
-        if (!response.IsSuccessStatusCode)
+            throw new MailjetApiClientException($"Contact {contactEmail} cannot be found.");
+        }
+
+        try
         {
-            throw new MailjetApiClientException(response.FormatForLogs());
+            await _httpClient
+                .Request("contacts", maybeContactId)
+                .DeleteAsync();
+        }
+        catch (FlurlHttpException e)
+        {
+            throw new MailjetApiClientException("Fail to call the Mailjet API.", e);
         }
     }
 }
